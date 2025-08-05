@@ -1,4 +1,5 @@
 311_Resolution_Satisfaction_Survey.csv
 cleaned.csv
 eda_incl.csv
-__pycache__/ 
+__pycache__/
+satisfaction_model.pkl
