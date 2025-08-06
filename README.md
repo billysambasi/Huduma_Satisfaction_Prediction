@@ -313,7 +313,7 @@ joblib.dump(model_data, 'satisfaction_model.pkl')
 ### Development Setup
 ```bash
 # Fork and clone repository
-git clone https://github.com/yourusername/Phase5_Capstone.git
+git clone https://github.com/billysambasi/Phase5_Capstone.git
 cd Phase5_Capstone
 
 # Create virtual environment
