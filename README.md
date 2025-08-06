@@ -105,9 +105,6 @@ pip install xgboost shap yellowbrick  # For advanced analysis
 git clone <repository-url>
 cd Phase5_Capstone
 
-# Install dependencies
-pip install -r requirements.txt  # If available
-
 # Run Streamlit app
 streamlit run streamlit.py
 
@@ -316,7 +313,7 @@ joblib.dump(model_data, 'satisfaction_model.pkl')
 ### Development Setup
 ```bash
 # Fork and clone repository
-git clone https://github.com/yourusername/Phase5_Capstone.git
+git clone https://github.com/billysambasi/Phase5_Capstone.git
 cd Phase5_Capstone
 
 # Create virtual environment
