@@ -105,9 +105,6 @@ pip install xgboost shap yellowbrick  # For advanced analysis
 git clone <repository-url>
 cd Phase5_Capstone
 
-# Install dependencies
-pip install -r requirements.txt  # If available
-
 # Run Streamlit app
 streamlit run streamlit.py
 
