@@ -22,11 +22,12 @@ Phase5_Capstone/
 ├── 311_Resolution_Satisfaction_Survey.csv  # Original dataset (364,689 records)
 ├── cleaned.csv                            # Processed dataset after cleaning
 ├── eda_incl.csv                          # Enhanced dataset with NLP features
-├── satisfaction_model.pkl                 # Trained ML model with encoders
+├── best_model.joblib                     # Trained ML model (joblib format)
 ├── 
 ├── Core Application Files:
-├── streamlit.py                          # Streamlit web application
-├── app_api.py                           # FastAPI REST API server
+├── script_streamlit.py                   # Streamlit web application
+├── app_api.py                           # FastAPI REST API server (main)
+├── script_api.py                        # Alternative FastAPI implementation
 ├── satisfaction_pipeline.py             # Custom ML pipeline class
 ├── data_processor.py                    # Data loading and cleaning utilities
 ├── data_analysis.py                     # EDA and visualization classes
@@ -39,6 +40,7 @@ Phase5_Capstone/
 ├── 
 ├── Configuration:
 ├── .gitignore                          # Git ignore rules
+├── requirements.txt                    # Python dependencies
 └── LICENSE                             # MIT License
 ```
 
@@ -102,17 +104,20 @@ pip install xgboost shap yellowbrick  # For advanced analysis
 ### Quick Start
 ```bash
 # Clone repository
-git clone <repository-url>
+git clone https://github.com/billysambasi/Phase5_Capstone.git
 cd Phase5_Capstone
 
 # Install dependencies
-pip install -r requirements.txt  # If available
+pip install -r requirements.txt
 
 # Run Streamlit app
-streamlit run streamlit.py
+streamlit run script_streamlit.py
 
-# Or run FastAPI server
+# Or run FastAPI server (main implementation)
 uvicorn app_api:app --reload
+
+# Or run alternative FastAPI server
+uvicorn script_api:app --reload
 ```
 
 ## Application Interfaces
@@ -128,7 +133,7 @@ uvicorn app_api:app --reload
 
 **Usage:**
 ```bash
-streamlit run streamlit.py
+streamlit run script_streamlit.py
 # Access at http://localhost:8501
 ```
 
@@ -270,7 +275,8 @@ model_data = {
     'label_encoders': self.label_encoders,
     'feature_names': self.feature_names
 }
-joblib.dump(model_data, 'satisfaction_model.pkl')
+joblib.dump(model_data, 'best_model.joblib')
+# Also supports satisfaction_model.pkl format
 ```
 
 ### API Integration
@@ -297,6 +303,19 @@ joblib.dump(model_data, 'satisfaction_model.pkl')
 - **Pipeline Architecture**: Reusable ML pipeline with sklearn compatibility
 - **Separation of Concerns**: Clear separation between data, model, and API layers
 
+## Current Implementation Status
+
+### Working Components
+- ✅ **Data Processing Pipeline**: Complete data cleaning and preprocessing
+- ✅ **ML Pipeline**: Custom SatisfactionPipeline class with Random Forest
+- ✅ **Model Training**: Jupyter notebooks for EDA and modeling
+- ✅ **FastAPI Backend**: Two implementations (app_api.py and script_api.py)
+- ✅ **Model Persistence**: Joblib-based model saving/loading
+
+### In Development
+- 🔄 **Streamlit Interface**: Basic structure implemented, needs API integration
+- 🔄 **Model File Consistency**: Multiple model formats (pkl/joblib) need standardization
+
 ## Future Enhancements
 
 ### Technical Improvements
@@ -316,7 +335,7 @@ joblib.dump(model_data, 'satisfaction_model.pkl')
 ### Development Setup
 ```bash
 # Fork and clone repository
-git clone https://github.com/yourusername/Phase5_Capstone.git
+git clone https://github.com/billysambasi/Phase5_Capstone.git
 cd Phase5_Capstone
 
 # Create virtual environment

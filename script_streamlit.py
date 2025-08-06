@@ -1,9 +1,21 @@
-import script_streamlit as st
+import streamlit as st
 import pandas as pd
 import numpy as np
 import requests
 import json
 from io import BytesIO
+
+# Constants
+BOROUGHS = ['MANHATTAN', 'BROOKLYN', 'QUEENS', 'BRONX', 'STATEN ISLAND', 'Unknown Borough']
+
+# Agency-Complaint mapping (simplified)
+AGENCY_COMPLAINT_MAPPING = {
+    'Department of Buildings': ['Adult Establishment', 'Advertising Sign', 'Building Condition'],
+    'NYPD': ['Illegal Parking', 'Noise', 'Traffic Signal Condition'],
+    'Department of Sanitation': ['Dirty Conditions', 'Missed Collection', 'Recycling Enforcement'],
+    'Department of Transportation': ['Street Condition', 'Traffic Signal Condition', 'Street Light Condition'],
+    'Department for the Aging': ['Legal Services Provider Complaint', 'Senior Center Complaint']
+}
 
 # Page config
 st.set_page_config(
