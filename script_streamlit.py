@@ -6,9 +6,9 @@ import json
 from io import BytesIO
 
 # Constants
-BOROUGHS = ['MANHATTAN', 'BROOKLYN', 'QUEENS', 'BRONX', 'STATEN ISLAND', 'Unknown Borough']
+BOROUGHS = ['MANHATTAN', 'BROOKLYN', 'QUEENS', 'BRONX', 'STATEN ISLAND']
 
-# Agency-Complaint mapping (simplified)
+# Agency-Complaint mapping
 AGENCY_COMPLAINT_MAPPING = {
     'Department of Buildings': ['Adult Establishment', 'Advertising Sign', 'Building Condition'],
     'NYPD': ['Illegal Parking', 'Noise', 'Traffic Signal Condition'],
@@ -19,12 +19,12 @@ AGENCY_COMPLAINT_MAPPING = {
 
 # Page config
 st.set_page_config(
-    page_title="GoK Huduma Satisfaction Predictor",
+    page_title="Huduma Satisfaction Predictor",
     layout="wide"
 )
 
 # Title
-st.title("GoK Huduma Satisfaction Prediction System")
+st.title("Huduma Satisfaction Prediction System")
 
 # Sidebar for navigation
 st.sidebar.title("Navigation")
