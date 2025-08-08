@@ -31,12 +31,14 @@ Phase5_Capstone/
 ├── satisfaction_pipeline.py             # Custom ML pipeline class
 ├── data_processor.py                    # Data loading and cleaning utilities
 ├── data_analysis.py                     # EDA and visualization classes
+├── utils.py                             # Utility functions for index file
 ├── 
 ├── Analysis Notebooks:
 ├── data_preparation.ipynb               # Data cleaning and preprocessing
 ├── EDA.ipynb                           # Exploratory data analysis
 ├── modelling.ipynb                     # Model development and evaluation
 ├── deployment.ipynb                    # Deployment preparation
+├── index.ipynb                         # Project summary notebook
 ├── 
 ├── Configuration:
 ├── .gitignore                          # Git ignore rules
