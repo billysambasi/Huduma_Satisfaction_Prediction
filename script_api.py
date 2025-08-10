@@ -10,30 +10,26 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 
 # Load model
 try:
-    model = joblib.load('best_model.joblib')
+    model_data = joblib.load('best_model.joblib')
+    model = model_data['pipeline']
+    label_encoders = model_data['label_encoders']
+    feature_names = model_data['feature_names']
     print("Model loaded successfully!")
+    print(f"Expected features: {feature_names}")
 except FileNotFoundError:
-    print("Model not found. Using rule-based prediction.")
+    print("Model not found.")
     model = None
+    model_data = None
+    label_encoders = {}
+    feature_names = []
 
-# Define features and mappings
-categorical_features = ['Agency Name', 'Complaint Type', 'Borough', 'Sentiment Label']
-numerical_features = ['Survey Year', 'Survey Month', 'Cluster', 'Sentiment Score',
-                     'resolution_length', 'dissatisfaction_reason_provided',
-                     'sentiment_positive', 'sentiment_negative']
-
-# Initialize encoders/scalers
-scaler = StandardScaler()
-label_encoders = {feat: LabelEncoder() for feat in categorical_features}
-
-app = FastAPI(title="Huduma Customer Satisfaction Prediction API", version="1.0.0")
+app = FastAPI(title="Huduma Satisfaction Prediction API", version="1.0.0")
 
 class ComplaintInput(BaseModel):
     complaint_text: str
     agency_name: str = "Unknown"
     complaint_type: str = "Unknown"
     borough: str = "Unknown"
-    resolution_description: str = ""
 
 class PredictionResponse(BaseModel):
     satisfaction_prediction: str
@@ -43,8 +39,7 @@ class PredictionResponse(BaseModel):
 def extract_features(complaint_data: ComplaintInput) -> Dict[str, Any]:
     features = {}
     complaint_lower = complaint_data.complaint_text.lower()
-    resolution_lower = complaint_data.resolution_description.lower() if complaint_data.resolution_description else ""
-    combined_text = complaint_lower + " " + resolution_lower
+    combined_text = complaint_lower + " "
 
     positive_words = ['good', 'great', 'excellent', 'satisfied', 'happy', 'pleased', 'wonderful',
                       'amazing', 'perfect', 'fantastic', 'outstanding', 'helpful', 'professional',
@@ -88,9 +83,6 @@ def extract_features(complaint_data: ComplaintInput) -> Dict[str, Any]:
     features['Complaint Type'] = complaint_data.complaint_type
     features['Borough'] = complaint_data.borough
 
-    # Placeholder for a field not used but mentioned in numerical_features
-    features['resolution_length'] = len(complaint_data.resolution_description)
-
     return features
 
 def get_explanation(prediction: int, confidence: float, features: Dict[str, Any]) -> str:
@@ -123,23 +115,38 @@ def get_explanation(prediction: int, confidence: float, features: Dict[str, Any]
     return explanation
 
 def predict_single_from_features(features: Dict[str, Any]) -> Dict[str, Any]:
-    if model is not None:
-        feature_vector = []
-        for feat in numerical_features:
-            feature_vector.append(features[feat])
-        for feat in categorical_features:
-            value = features[feat]
-            encoded_value = hash(value) % 100
-            feature_vector.append(encoded_value)
-
-        X = np.array(feature_vector).reshape(1, -1)
-        prediction = model.predict(X)[0]
+    if model is not None and feature_names:
+        # Create DataFrame with only the features the model expects
+        model_features = {}
+        for feat in feature_names:
+            model_features[feat] = features.get(feat, 0)
+        
+        df = pd.DataFrame([model_features])
+        
         try:
-            prediction_proba = model.predict_proba(X)[0]
-            confidence = max(prediction_proba)
-        except:
-            confidence = 0.7
+            prediction = model.predict(df)[0]
+            try:
+                prediction_proba = model.predict_proba(df)[0]
+                confidence = max(prediction_proba)
+            except:
+                confidence = 0.7
+        except Exception as e:
+            print(f"Model prediction error: {e}")
+            # Fallback to rule-based prediction
+            sentiment_score = features.get('Sentiment Score', 0)
+            has_negative = features.get('sentiment_negative', 0)
+            has_positive = features.get('sentiment_positive', 0)
+            if has_negative or sentiment_score < -0.1:
+                prediction = 0
+                confidence = 0.6
+            elif has_positive and sentiment_score > 0.1:
+                prediction = 1
+                confidence = 0.7
+            else:
+                prediction = 0
+                confidence = 0.5
     else:
+        # Fallback when model is not available
         sentiment_score = features.get('Sentiment Score', 0)
         has_negative = features.get('sentiment_negative', 0)
         has_positive = features.get('sentiment_positive', 0)
@@ -168,7 +175,7 @@ def root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy", "model_loaded": model is not None}
+    return {"status": "healthy", "model_loaded": model is not None and len(feature_names) > 0}
 
 @app.post("/predict", response_model=PredictionResponse)
 def predict_satisfaction(complaint: ComplaintInput):
@@ -200,8 +207,7 @@ async def predict_from_csv(file: UploadFile = File(...)):
                 complaint_text=row.get("complaint_text", ""),
                 agency_name=row.get("agency_name", "Unknown"),
                 complaint_type=row.get("complaint_type", "Unknown"),
-                borough=row.get("borough", "Unknown"),
-                resolution_description=row.get("resolution_description", "")
+                borough=row.get("borough", "Unknown")
             )
             features = extract_features(complaint_input)
             prediction_output = predict_single_from_features(features)
