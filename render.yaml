@@ -1,10 +1,16 @@
+# Exported from Render
 services:
   - type: web
     name: satisfaction-api
-    env: python
+    runtime: python
+    repo: https://github.com/billysambasi/Phase5_Capstone
+    branch: Deployment
+    plan: free
+    region: oregon
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn script_api:app --host 0.0.0.0 --port 10000
-    plan: free
     envVars:
       - key: PYTHON_VERSION
         value: 3.10
+    autoDeploy: true
+version: "1"
