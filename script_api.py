@@ -7,21 +7,35 @@ from typing import Dict, Any
 import uvicorn
 import io
 from sklearn.preprocessing import StandardScaler, LabelEncoder
+from huggingface_hub import hf_hub_download
+
+from huggingface_hub import hf_hub_download
+import joblib
 
 # Load model
 try:
-    model_data = joblib.load('best_model.joblib')
+    # Download from Hugging Face
+    model_path = hf_hub_download(
+        repo_id="sambasi2406/huduma_satisfaction_prediction",  
+        filename="best_model.joblib"
+    )
+
+    # Load as before
+    model_data = joblib.load(model_path)
     model = model_data['pipeline']
     label_encoders = model_data['label_encoders']
     feature_names = model_data['feature_names']
+
     print("Model loaded successfully!")
     print(f"Expected features: {feature_names}")
+
 except FileNotFoundError:
     print("Model not found.")
     model = None
     model_data = None
     label_encoders = {}
     feature_names = []
+
 
 app = FastAPI(title="Huduma Satisfaction Prediction API", version="1.0.0")
 
