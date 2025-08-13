@@ -47,13 +47,13 @@ def extract_features(complaint_data: ComplaintInput) -> Dict[str, Any]:
     negative_words = ['bad', 'terrible', 'awful', 'dissatisfied', 'angry', 'frustrated', 'poor',
                       'horrible', 'disgusting', 'unacceptable', 'useless', 'incompetent', 'rude',
                       'slow', 'delayed', 'ignored', 'waiting', 'weeks', 'months', 'never', 'no one',
-                      'worst', 'hate', 'annoyed', 'disappointed', 'complaint', 'problem', 'issue',
-                      'broken', 'damaged', 'failed', 'wrong', 'mistake', 'error']
+                      'worst', 'hate', 'annoyed', 'disappointed', 'broken', 'damaged', 'failed', 
+                      'wrong', 'mistake', 'error']
 
     pos_count = sum(2 if word in complaint_lower else 1 for word in positive_words if word in combined_text)
     neg_count = sum(2 if word in complaint_lower else 1 for word in negative_words if word in combined_text)
 
-    if neg_count > 0:
+    if neg_count > pos_count and neg_count > 0:
         features['sentiment_negative'] = 1
         features['sentiment_positive'] = 0
         features['Sentiment Score'] = -min(1.0, neg_count * 0.3)
@@ -72,8 +72,9 @@ def extract_features(complaint_data: ComplaintInput) -> Dict[str, Any]:
         features['Sentiment Label'] = 'neutral'
         features['dissatisfaction_reason_provided'] = 0
 
+    # Only apply complaint penalty if sentiment is truly negative
     complaint_indicators = ['complaint', 'complain', 'report', 'issue', 'problem']
-    if any(word in complaint_lower for word in complaint_indicators) and features['sentiment_negative'] == 0:
+    if any(word in complaint_lower for word in complaint_indicators) and features['sentiment_positive'] == 0 and features['Sentiment Score'] <= 0:
         features['Sentiment Score'] = min(features['Sentiment Score'], -0.1)
 
     features['Survey Year'] = 2024
