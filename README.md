@@ -388,7 +388,7 @@ joblib.dump(model_data, 'best_model.joblib')
 ### Development Setup
 ```bash
 # Fork and clone repository
-git clone https://github.com/billysambasi/Phase5_Capstone.git
+git clone https://github.com/billysambasi/Huduma_Satisfaction_Prediction.git
 cd Phase5_Capstone
 
 # Create virtual environment
