@@ -4,31 +4,32 @@ import numpy as np
 import joblib
 import pickle
 import os
-import logging
 from textblob import TextBlob
 import altair as alt
 
 # Page Config
 st.set_page_config(page_title="Huduma Satisfaction Predictor", layout="wide")
 
-# Logging Setup
-logging.basicConfig(filename="app.log", level=logging.INFO,
-                    format="%(asctime)s - %(levelname)s - %(message)s")
-
 # Load Model
 @st.cache_resource
 def load_model():
     try:
         if os.path.exists('best_model.joblib'):
-            return joblib.load('best_model.joblib')
+            model_data = joblib.load('best_model.joblib')
         elif os.path.exists('satisfaction_model.pkl'):
             with open('satisfaction_model.pkl', 'rb') as f:
-                return pickle.load(f)
+                model_data = pickle.load(f)
         else:
-            st.error("❌ No model file found. Please ensure 'best_model.joblib' or 'satisfaction_model.pkl' exists.")
+            st.error("❌ No model file found.")
             return None
+        
+        # Validate model structure
+        if not all(key in model_data for key in ['pipeline', 'label_encoders']):
+            st.error("❌ Invalid model format.")
+            return None
+            
+        return model_data
     except Exception as e:
-        logging.error(f"Model loading failed: {str(e)}")
         st.error(f"Error loading model: {str(e)}")
         return None
 
@@ -81,12 +82,11 @@ def make_prediction(model_data, agency, complaint_type, borough, year=2024, mont
 
         return {
             'prediction': 'Satisfied' if prediction == 1 else 'Dissatisfied',
-            'probability': probability[1],
-            'confidence': max(probability)
+            'probability': float(probability[1]),
+            'confidence': float(max(probability))
         }
 
     except Exception as e:
-        logging.error(f"Prediction error: {str(e)}")
         return {'error': str(e)}
 
 # Main App
@@ -145,38 +145,38 @@ def main():
                 df = pd.read_csv(uploaded_file)
                 st.write("Preview:", df.head())
 
-                required_cols = {'agency_name', 'complaint_type', 'borough', 'year', 'month', 'complaint_text'}
-                if not required_cols.issubset(df.columns):
-                    st.error("CSV missing required columns.")
-                elif st.button("🚀 Generate Predictions"):
-                    results_df = df.apply(
-                        lambda row: pd.Series(make_prediction(
+                if st.button("🚀 Generate Predictions"):
+                    results = []
+                    progress = st.progress(0)
+                    
+                    for idx, row in df.iterrows():
+                        result = make_prediction(
                             model_data,
-                            row['agency_name'],
-                            row['complaint_type'],
-                            row['borough'],
-                            row['year'],
-                            row['month'],
-                            row['complaint_text']
-                        )),
-                        axis=1
-                    )
-                    final_df = pd.concat([df, results_df], axis=1)
+                            row.get('agency_name', 'NYPD'),
+                            row.get('complaint_type', 'Noise'),
+                            row.get('borough', 'MANHATTAN'),
+                            row.get('year', 2024),
+                            row.get('month', 6),
+                            row.get('complaint_text', '')
+                        )
+                        results.append(result)
+                        progress.progress((idx + 1) / len(df))
+                    
+                    # Create results dataframe
+                    results_df = pd.DataFrame(results)
+                    final_df = pd.concat([df.reset_index(drop=True), results_df], axis=1)
+                    
                     st.success("✅ Predictions completed!")
 
                     # Summary metrics
                     col1, col2, col3 = st.columns(3)
-                    col1.metric("Satisfied", (final_df['prediction'] == 'Satisfied').sum())
-                    col2.metric("Dissatisfied", (final_df['prediction'] == 'Dissatisfied').sum())
-                    col3.metric("Avg Confidence", f"{final_df['confidence'].mean():.1%}")
-
-                    # Visualization
-                    chart = alt.Chart(final_df).mark_bar().encode(
-                        x='prediction',
-                        y='count()',
-                        color='prediction'
-                    )
-                    st.altair_chart(chart, use_container_width=True)
+                    satisfied_count = (final_df['prediction'] == 'Satisfied').sum()
+                    dissatisfied_count = (final_df['prediction'] == 'Dissatisfied').sum()
+                    avg_confidence = final_df['confidence'].mean()
+                    
+                    col1.metric("Satisfied", satisfied_count)
+                    col2.metric("Dissatisfied", dissatisfied_count)
+                    col3.metric("Avg Confidence", f"{avg_confidence:.1%}")
 
                     st.dataframe(final_df)
 
@@ -185,7 +185,6 @@ def main():
                     st.download_button("📥 Download Results", csv, "satisfaction_predictions.csv", "text/csv")
 
             except Exception as e:
-                logging.error(f"Batch processing error: {str(e)}")
                 st.error(f"Error processing file: {str(e)}")
 
 if __name__ == "__main__":
