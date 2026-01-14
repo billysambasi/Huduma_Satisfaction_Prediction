@@ -6,28 +6,27 @@ import pickle
 import os
 from textblob import TextBlob
 import altair as alt
+from huggingface_hub import hf_hub_download
 
 # Page Config
 st.set_page_config(page_title="Huduma Satisfaction Predictor", layout="wide")
 
-# Load Model
+# Load Model from Hugging Face Hub
 @st.cache_resource
 def load_model():
     try:
-        if os.path.exists('best_model.joblib'):
-            model_data = joblib.load('best_model.joblib')
-        elif os.path.exists('satisfaction_model.pkl'):
-            with open('satisfaction_model.pkl', 'rb') as f:
-                model_data = pickle.load(f)
-        else:
-            st.error("❌ No model file found.")
-            return None
-        
+        # Always fetch from Hugging Face Hub
+        model_path = hf_hub_download(
+            repo_id="sambasi2406/huduma_satisfaction_predictor",
+            filename="best_model.joblib"
+        )
+        model_data = joblib.load(model_path)
+
         # Validate model structure
         if not all(key in model_data for key in ['pipeline', 'label_encoders']):
-            st.error("❌ Invalid model format.")
+            st.error("❌ Invalid model format. Expected keys: pipeline, label_encoders")
             return None
-            
+
         return model_data
     except Exception as e:
         st.error(f"Error loading model: {str(e)}")
@@ -98,7 +97,7 @@ def main():
     if model_data is None:
         st.stop()
 
-    st.success("✅ Model loaded successfully!")
+    st.success("✅ Model loaded successfully from Hugging Face Hub!")
 
     tab1, tab2 = st.tabs(["🔍 Single Prediction", "📊 Batch Upload"])
 
@@ -148,7 +147,7 @@ def main():
                 if st.button("🚀 Generate Predictions"):
                     results = []
                     progress = st.progress(0)
-                    
+
                     for idx, row in df.iterrows():
                         result = make_prediction(
                             model_data,
@@ -161,11 +160,11 @@ def main():
                         )
                         results.append(result)
                         progress.progress((idx + 1) / len(df))
-                    
+
                     # Create results dataframe
                     results_df = pd.DataFrame(results)
                     final_df = pd.concat([df.reset_index(drop=True), results_df], axis=1)
-                    
+
                     st.success("✅ Predictions completed!")
 
                     # Summary metrics
@@ -173,7 +172,7 @@ def main():
                     satisfied_count = (final_df['prediction'] == 'Satisfied').sum()
                     dissatisfied_count = (final_df['prediction'] == 'Dissatisfied').sum()
                     avg_confidence = final_df['confidence'].mean()
-                    
+
                     col1.metric("Satisfied", satisfied_count)
                     col2.metric("Dissatisfied", dissatisfied_count)
                     col3.metric("Avg Confidence", f"{avg_confidence:.1%}")
