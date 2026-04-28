@@ -1,5 +1,3 @@
-311_Resolution_Satisfaction_Survey.csv
-cleaned.csv
-eda_incl.csv
+data/
+models/
 __pycache__/
-best_model.joblib
